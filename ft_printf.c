@@ -10,7 +10,19 @@
 /*                                                                            */
 /* ************************************************************************** */
 #include "ft_printf.h"
-#include <unistd.h>
+
+size_t ft_strlen(const char *s)
+{
+	size_t i;
+
+	i = 0;
+	while (*s != 0)
+	{
+		i++;
+		s++;
+	}
+	return (i);
+}
 
 void hex_upper(unsigned long ul, int *count_ptr)
 {
@@ -21,11 +33,10 @@ void hex_upper(unsigned long ul, int *count_ptr)
 	}
 	else
 	{
-		*count_ptr = *count_ptr + 1;
 		if (ul <= 9)
-			ft_putnbr_fd((int)ul, 1);
+			ft_putnbr_count((int)ul, count_ptr);
 		else
-			ft_putchar_fd('A' + (ul - 10), 1);
+			ft_putchar_fd('A' + (ul - 10), 1, count_ptr);
 	}
 }
 
@@ -38,18 +49,15 @@ void hex_lower(unsigned long ul, int *count_ptr)
 	}
 	else
 	{
-		*count_ptr = *count_ptr + 1;
 		if (ul <= 9)
-			ft_putnbr_fd((int)ul, 1);
+			ft_putnbr_count((int)ul, count_ptr);
 		else
-			ft_putchar_fd('a' + (ul - 10), 1);
+			ft_putchar_fd('a' + (ul - 10), 1, count_ptr);
 	}
 }
 
 void ft_putnbr_count(int n, int *count_ptr)
 {
-	char chara;
-
 	if (n < 0)
 	{
 		if (n == INT_MIN)
@@ -59,8 +67,7 @@ void ft_putnbr_count(int n, int *count_ptr)
 			return;
 		}
 		n = n * -1;
-		write(1, &"-", 1);
-		*count_ptr = *count_ptr + 1;
+		ft_putchar_fd('-', 1, count_ptr);
 	}
 	if (n > 9)
 	{
@@ -68,17 +75,11 @@ void ft_putnbr_count(int n, int *count_ptr)
 		ft_putnbr_count(n % 10, count_ptr);
 	}
 	else
-	{
-		chara = n + '0';
-		write(1, &chara, 1);
-		*count_ptr = *count_ptr + 1;
-	}
+		ft_putchar_fd(n + '0', 1, count_ptr);
 }
 
 void ft_putunsigned_count(long long n, int *count_ptr)
 {
-	char chara;
-
 	if (n < 0)
 	{
 		n = 4294967296 + n;
@@ -90,26 +91,30 @@ void ft_putunsigned_count(long long n, int *count_ptr)
 		ft_putunsigned_count(n % 10, count_ptr);
 	}
 	else
-	{
-		chara = n + '0';
-		write(1, &chara, 1);
-		*count_ptr = *count_ptr + 1;
-	}
+		ft_putchar_fd(n + '0', 1, count_ptr);
+}
+
+void ft_putchar_fd(char c, int fd, int *count_ptr)
+{
+	write(fd, &c, 1);
+	*count_ptr = *count_ptr + 1;
+}
+
+void ft_putstr_fd(char *s, int fd, int *count_ptr)
+{
+	int len;
+
+	len = ft_strlen(s);
+	write(fd, s, len);
+	*count_ptr = *count_ptr + ft_strlen(s);
 }
 
 int ft_printf(const char *ptr, ...)
 {
 	va_list args;
-	char chara;
-	char *str;
-	int nbr;
-	void *point;
-	unsigned long ul;
-	long long ll;
-
 	int *count_ptr;
 	int dummy;
-
+	void *input;
 	va_start(args, ptr);
 	dummy = 0;
 	count_ptr = &dummy;
@@ -120,67 +125,38 @@ int ft_printf(const char *ptr, ...)
 		{
 			ptr++;
 			if (*ptr == 'c')
-			{
-				chara = va_arg(args, int);
-				ft_putchar_fd(chara, 1);
-				*count_ptr = *count_ptr + 1;
-			}
+				ft_putchar_fd(va_arg(args, int), 1, count_ptr);
 			else if (*ptr == 's')
 			{
-				str = va_arg(args, char *);
-				if (str == NULL)
-					str = "(null)";
-				ft_putstr_fd(str, 1);
-				*count_ptr = *count_ptr + ft_strlen(str);
+				input = va_arg(args, char *);
+				if (input == NULL)
+					input = "(null)";
+				ft_putstr_fd((char *)input, 1, count_ptr);
 			}
 			else if (*ptr == 'p')
 			{
-				point = va_arg(args, void *);
-				if (point == NULL)
-				{
-					ft_putstr_fd("(nil)", 1);
-					*count_ptr = *count_ptr + ft_strlen("(nil)");
-				}
+				input = va_arg(args, void *);
+				if (input == NULL)
+					ft_putstr_fd("(nil)", 1, count_ptr);
 				else
 				{
-					ul = (unsigned long)point;
-					ft_putstr_fd("0x", 1);
-					hex_lower(ul, count_ptr);
-					*count_ptr = *count_ptr + 2;
+					ft_putstr_fd("0x", 1, count_ptr);
+					hex_lower((unsigned long)input, count_ptr);
 				}
 			}
 			else if (*ptr == 'd' || *ptr == 'i')
-			{
-				nbr = va_arg(args, int);
-				ft_putnbr_count(nbr, count_ptr);
-			}
+				ft_putnbr_count(va_arg(args, int), count_ptr);
 			else if (*ptr == 'u')
-			{
-				ll = va_arg(args, long long);
-				ft_putunsigned_count(ll, count_ptr);
-			}
+				ft_putunsigned_count(va_arg(args, long long), count_ptr);
 			else if (*ptr == 'x')
-			{
-				ul = va_arg(args, unsigned long);
-				hex_lower(ul, count_ptr);
-			}
+				hex_lower(va_arg(args, unsigned long), count_ptr);
 			else if (*ptr == 'X')
-			{
-				ul = va_arg(args, unsigned long);
-				hex_upper(ul, count_ptr);
-			}
+				hex_upper(va_arg(args, unsigned long), count_ptr);
 			else if (*ptr == '%')
-			{
-				ft_putchar_fd('%', 1);
-				*count_ptr = *count_ptr + 1;
-			}
+				ft_putchar_fd('%', 1, count_ptr);
 		}
 		else
-		{
-			chara = *ptr;
-			ft_putchar_fd(chara, 1);
-			*count_ptr = *count_ptr + 1;
-		}
+			ft_putchar_fd(*ptr, 1, count_ptr);
 		ptr++;
 	}
 	va_end(args);
