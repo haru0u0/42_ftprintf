@@ -22,7 +22,7 @@ void hex_upper(unsigned long ul, int *count_ptr);
 void hex_lower(unsigned long ul, int *count_ptr);
 void ft_putnbr_count(int n, int *count_ptr);
 void ft_putunsigned_count(long long n, int *count_ptr);
-void ft_putchar_fd(char c, int fd, int *count_ptr);
-void ft_putstr_fd(char *s, int fd, int *count_ptr);
+void ft_putchar_count(char c, int *count_ptr);
+void ft_putstr_count(char *s, int *count_ptr);
 
 #endif
