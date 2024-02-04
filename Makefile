@@ -1,14 +1,12 @@
 NAME    = libftprintf.a
-SRCS    = ft_printf.c
-OBJS    = ft_printf.o
+SRCS    = ft_printf.c utils1.c utils2.c handlers.c
+OBJS    = $(SRCS:.c=.o)
+CFLAGS  = -Wall -Wextra -Werror
 
 all: $(NAME)
 
 $(NAME): $(OBJS)
 	ar rcs $(NAME) $(OBJS)
-
-$(OBJS): $(LIBFT)
-	cc -Wall -Wextra -Werror -c -o ft_printf.o ft_printf.c
 
 clean:
 	rm -f $(OBJS)
